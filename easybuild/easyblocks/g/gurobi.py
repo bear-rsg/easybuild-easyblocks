@@ -81,7 +81,8 @@ class EB_Gurobi(Tarball):
 
         # Only define GRB_LICENSE_FILE env var if it doesn't already exist
         if not os.getenv("GRB_LICENSE_FILE"):
-            txt += self.module_generator.set_environment('GRB_LICENSE_FILE', os.path.join(self.installdir, 'gurobi.lic'))
+            txt += self.module_generator.set_environment('GRB_LICENSE_FILE',
+                                                         os.path.join(self.installdir, 'gurobi.lic'))
 
         if get_software_root('Python'):
             txt += self.module_generator.prepend_paths('PYTHONPATH', det_pylibdir())
