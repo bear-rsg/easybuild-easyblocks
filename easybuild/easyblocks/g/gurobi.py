@@ -44,7 +44,7 @@ class EB_Gurobi(Tarball):
     def install_step(self):
         """Install Gurobi and license file."""
 
-        # First we check if the client license file is defined in the standard variable
+        # Check if the client license file is already defined in the standard Gurobi variable
         licfile = os.getenv("GRB_LICENSE_FILE")
         if licfile is None:
             # make sure license file is available
