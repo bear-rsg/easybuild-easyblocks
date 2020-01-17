@@ -1,5 +1,5 @@
 ##
-# Copyright 2009-2019 Ghent University
+# Copyright 2009-2020 Ghent University
 #
 # This file is part of EasyBuild,
 # originally created by the HPC team of Ghent University (http://ugent.be/hpc/en),
@@ -62,6 +62,7 @@ class EB_GAMESS_minus_US(EasyBlock):
         """Define custom easyconfig parameters for GAMESS-US."""
         extra_vars = {
             'ddi_comm': ['mpi', "DDI communication layer to use", CUSTOM],
+            'cct3_ccsd3a': ['no', "Build Michigan State University CCT3 & CCSD3A methods?", CUSTOM],
             'maxcpus': [None, "Maximum number of cores per node", MANDATORY],
             'maxnodes': [None, "Maximum number of nodes", MANDATORY],
             'runtest': [True, "Run GAMESS-US tests", CUSTOM],
@@ -168,14 +169,17 @@ class EB_GAMESS_minus_US(EasyBlock):
             "MKL pathname? ": mathlib_root,
             "MKL version (or 'skip')? ": 'skip',
             "MKL version (or 'proceed')? ": 'proceed',  # changed in gamess-20170420R1
+            "enter this full pathname:": mathlib_root,
             "please hit <return> to compile the GAMESS source code activator": '',
             "please hit <return> to set up your network for Linux clusters.": '',
             "communication library ('sockets' or 'mpi')? ": self.cfg['ddi_comm'],
+            "communication library ('serial','sockets' or 'mpi' or 'mixed')? ": self.cfg['ddi_comm'],
             "Enter MPI library (impi, mvapich2, mpt, sockets):": mpilib,
             "Enter MPI library (impi, mpich, mpich2, mvapich2, mpt, sockets):": mpilib,  # changed in gamess-20170420R1
             "Please enter your %s's location: " % mpilib: mpilib_root,
             "Do you want to try LIBCCHEM?  (yes/no): ": 'no',
             "Enter full path to OpenBLAS libraries (without 'lib' subdirectory):": mathlib_root,
+            "Optional: Build Michigan State University CCT3 & CCSD3A methods?  (yes/no): ": self.cfg["cct3_ccsd3a"],
         }
         stdqa = {
             r"GAMESS directory\? \[.*\] ": self.builddir,
@@ -185,6 +189,15 @@ class EB_GAMESS_minus_US(EasyBlock):
             "Enter your choice of 'mkl' or .* 'none': ": mathlib,
         }
         run_cmd_qa(cmd, qa=qa, std_qa=stdqa, log_all=True, simple=True)
+
+        compddi = os.path.join(self.builddir, 'ddi/compddi')
+        try:
+            for line in fileinput.input(compddi, inplace=1, backup='.orig'):
+                line = re.sub(r"^\s*set\s*MAXCPUS=.*", r"set MAXCPUS=%s" % self.cfg['maxcpus'], line)
+                line = re.sub(r"^\s*set\s*MAXNODES=.*", r"set MAXNODES=%s" % self.cfg['maxnodes'], line)
+                sys.stdout.write(line)
+        except IOError as err:
+            raise EasyBuildError("Failed to patch %s: %s", compddi, err)
 
         self.log.debug("Contents of install.info:\n%s" % read_file(os.path.join(self.builddir, 'install.info')))
 
