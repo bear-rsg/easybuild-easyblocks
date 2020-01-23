@@ -1,5 +1,5 @@
 ##
-# Copyright 2009-2019 Ghent University
+# Copyright 2009-2020 Ghent University
 #
 # This file is part of EasyBuild,
 # originally created by the HPC team of Ghent University (http://ugent.be/hpc/en),
@@ -147,7 +147,12 @@ class ConfigureMake(EasyBlock):
         return config_guess_path
 
     def check_config_guess(self):
-        """Check timestamp & SHA256 checksum of config.guess script."""
+        """
+        Check timestamp & SHA256 checksum of config.guess script.
+
+        Returns True if ok (or there is no config.guess for this package) and False if it's too old
+        or doesn't match the checksum.
+        """
         # log version, timestamp & SHA256 checksum of config.guess that was found (if any)
         if self.config_guess:
             # config.guess includes a "timestamp='...'" indicating the version
@@ -170,10 +175,14 @@ class ConfigureMake(EasyBlock):
             if config_guess_version != CONFIG_GUESS_VERSION:
                 tup = (self.config_guess, config_guess_version, CONFIG_GUESS_VERSION)
                 print_warning("config.guess version at %s does not match expected version: %s vs %s" % tup)
+                return False
 
             if config_guess_checksum != CONFIG_GUESS_SHA256:
                 tup = (self.config_guess, config_guess_checksum, CONFIG_GUESS_SHA256)
                 print_warning("SHA256 checksum of config.guess at %s does not match expected checksum: %s vs %s" % tup)
+                return False
+
+        return True
 
     def fetch_step(self, *args, **kwargs):
         """Custom fetch step for ConfigureMake so we use an updated config.guess."""

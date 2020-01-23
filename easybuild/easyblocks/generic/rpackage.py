@@ -1,5 +1,5 @@
 ##
-# Copyright 2009-2019 Ghent University
+# Copyright 2009-2020 Ghent University
 #
 # This file is part of EasyBuild,
 # originally created by the HPC team of Ghent University (http://ugent.be/hpc/en),
@@ -39,8 +39,10 @@ from easybuild.easyblocks.r import EXTS_FILTER_R_PACKAGES, EB_R
 from easybuild.framework.easyconfig import CUSTOM
 from easybuild.framework.extensioneasyblock import ExtensionEasyBlock
 from easybuild.tools.build_log import EasyBuildError
-from easybuild.tools.filetools import mkdir
+from easybuild.tools.filetools import mkdir, copy_file
 from easybuild.tools.run import run_cmd, parse_log_for_error
+from easybuild.easyblocks.generic.configuremake import ConfigureMake
+from easybuild.tools.build_log import print_warning
 
 
 def make_R_install_option(opt, values, cmdline=False):
@@ -74,6 +76,7 @@ class RPackage(ExtensionEasyBlock):
         extra_vars.update({
             'exts_subdir': ['', "Subdirectory where R extensions should be installed info", CUSTOM],
             'unpack_sources': [False, "Unpack sources before installation", CUSTOM],
+            'update_config_guess': [False, "Update the config.guess file(s) in this package", CUSTOM],
         })
         return extra_vars
 
@@ -134,7 +137,7 @@ class RPackage(ExtensionEasyBlock):
 
         if self.cfg['unpack_sources']:
             loc = self.start_dir
-        elif self.patches:
+        elif self.patches or self.cfg['update_config_guess']:
             loc = self.ext_dir
         else:
             loc = self.ext_src
@@ -215,10 +218,21 @@ class RPackage(ExtensionEasyBlock):
             lib_install_prefix = os.path.join(self.installdir, self.cfg['exts_subdir'])
             mkdir(lib_install_prefix, parents=True)
 
-        if self.patches:
+        if self.patches or self.cfg['update_config_guess']:
             super(RPackage, self).run(unpack_src=True)
         else:
             super(RPackage, self).run()
+
+        if self.cfg['update_config_guess']:
+            confmake = ConfigureMake(self.cfg)
+            for root, _, files in os.walk(self.builddir):
+                for name in files:
+                    if name == 'config.guess':
+                        confmake.config_guess = os.path.join(root, name)
+                        if not confmake.check_config_guess():
+                            updated = confmake.obtain_config_guess()
+                            print_warning("Using updated config.guess for %s", confmake.config_guess)
+                            copy_file(updated, confmake.config_guess)
 
         if self.src:
             self.ext_src = self.src
