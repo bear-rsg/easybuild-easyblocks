@@ -182,8 +182,9 @@ class EB_GAMESS_minus_US(EasyBlock):
             "Please enter your %s's location: " % mpilib: mpilib_root,
             "Do you want to try LIBCCHEM?  (yes/no): ": 'no',
             "Enter full path to OpenBLAS libraries (without 'lib' subdirectory):": mathlib_root,
-            "enter this full pathname: ": ''.join([mathlib_root, '/lib']), # changed in gamess-20190930-R2
-            "Optional: Build Michigan State University CCT3 & CCSD3A methods?  (yes/no): ": 'no',  # changed in gamess-20190930-R2
+            "enter this full pathname: ": ''.join([mathlib_root, '/lib']),  # changed in gamess-20190930-R2
+            # changed in gamess-20190930-R2
+            "Optional: Build Michigan State University CCT3 & CCSD3A methods?  (yes/no): ": 'no',
         }
         stdqa = {
             r"GAMESS directory\? \[.*\] ": self.builddir,
@@ -231,14 +232,14 @@ class EB_GAMESS_minus_US(EasyBlock):
                 self.log.info("Using %s as scratch directory", self.scratch_dir)
 
         # OpenBLAS requires linking against OpenMP
-        #if mathlib == 'openblas':
-        #    lked = os.path.join(self.builddir, 'lked')
-        #    try:
-        #        for line in fileinput.input(lked, inplace=1, backup='.orig'):
-        #            line = re.sub(r'libopenblas.a"', r'libopenblas.a -fopenmp "', line)
-        #            sys.stdout.write(line)
-        #    except IOError as err:
-        #        raise EasyBuildError("Failed to patch %s: %s", lked, err)
+        # if mathlib == 'openblas':
+        #     lked = os.path.join(self.builddir, 'lked')
+        #     try:
+        #         for line in fileinput.input(lked, inplace=1, backup='.orig'):
+        #             line = re.sub(r'libopenblas.a"', r'libopenblas.a -fopenmp "', line)
+        #             sys.stdout.write(line)
+        #     except IOError as err:
+        #         raise EasyBuildError("Failed to patch %s: %s", lked, err)
 
         # patch hardcoded settings in rungms to use values specified in easyconfig file
         rungms = os.path.join(self.builddir, 'rungms')
@@ -247,7 +248,8 @@ class EB_GAMESS_minus_US(EasyBlock):
             for line in fileinput.input(rungms, inplace=1, backup='.orig'):
                 line = re.sub(r"^(\s*set\s*TARGET)=.*", r"\1=%s" % self.cfg['ddi_comm'], line)
                 line = re.sub(r"^(\s*set\s*GMSPATH)=.*", r"\1=%s\n%s" % (self.installdir, extra_gmspath_lines), line)
-                line = re.sub(r"^(\s*set\s*GMS_OPENMP)=.*", r"\1=%s" % "true", line)  # changed in gamess-20190930-R2 for OpenBLAS support
+                # changed in gamess-20190930-R2 for OpenBLAS support
+                line = re.sub(r"^(\s*set\s*GMS_OPENMP)=.*", r"\1=%s" % "true", line)
                 line = re.sub(r"(null\) set VERNO)=.*", r"\1=%s" % self.version, line)
                 line = re.sub(r"^(\s*set DDI_MPI_CHOICE)=.*", r"\1=%s" % mpilib, line)
                 line = re.sub(r"^(\s*set DDI_MPI_ROOT)=.*%s.*" % mpilib.lower(), r"\1=%s" % mpilib_path, line)
