@@ -64,6 +64,7 @@ class EB_GAMESS_minus_US(EasyBlock):
             'maxcpus': [None, "Maximum number of cores per node", MANDATORY],
             'maxnodes': [None, "Maximum number of nodes", MANDATORY],
             'runtest': [True, "Run GAMESS-US tests", CUSTOM],
+            'skiptests': [None, "Skip tests numbered", CUSTOM],
             'scratch_dir': ['$TMPDIR', "Scratch dir to be used in rungms script", CUSTOM],
         }
         return EasyBlock.extra_options(extra_vars)
@@ -284,6 +285,8 @@ class EB_GAMESS_minus_US(EasyBlock):
             # run all exam<id> tests, dump output to exam<id>.log
             n_tests = 47
             for i in range(1, n_tests+1):
+                if i in self.cfg['skiptests']:
+                    continue
                 test_cmd = ' '.join(test_env_vars + [rungms, 'exam%02d' % i, self.version, '1', '2'])
                 (out, _) = run_cmd(test_cmd, log_all=True, simple=False)
                 write_file('exam%02d.log' % i, out)
