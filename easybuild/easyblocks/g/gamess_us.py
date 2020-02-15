@@ -47,7 +47,7 @@ from easybuild.framework.easyblock import EasyBlock
 from easybuild.framework.easyconfig import CUSTOM, MANDATORY
 from easybuild.tools.build_log import EasyBuildError
 from easybuild.tools.config import build_option
-from easybuild.tools.filetools import change_dir, read_file, write_file
+from easybuild.tools.filetools import change_dir, mkdir, read_file, write_file
 from easybuild.tools.modules import get_software_root, get_software_version
 from easybuild.tools.py2vs3 import ascii_letters
 from easybuild.tools.run import run_cmd, run_cmd_qa
@@ -206,41 +206,6 @@ class EB_GAMESS_minus_US(EasyBlock):
 
         self.log.debug("Contents of install.info:\n%s" % read_file(os.path.join(self.builddir, 'install.info')))
 
-        if self.scratch_dir:
-            # FIXME: resolve environment variables used in scratch_dir values
-
-            # use unique subdirectory in specified scratch dir;
-            # we should use a shell command to create this directory,
-            # since scratch_dir may include names of environment variables
-            salt = ''.join(random.choice(ascii_letters) for i in range(10))
-            self.scratch_dir = os.path.join(self.scratch_dir, self.name + '-' + salt)
-
-            # make sure that specified directory is accessible via 'ssh', since rungms relies on that;
-            # touch a file, and then use "ssh localhost ls" to see if it's accessible;
-            # we must use shell commands for this, since scratch_dir may contain names of environment variables
-            test_file = os.path.join(self.scratch_dir, 'test.txt')
-            run_cmd("mkdir -p %s" % self.scratch_dir)
-            run_cmd("touch %s" % test_file)
-            test_cmd = 'ssh localhost "ls %s"' % test_file
-            (out, ec) = run_cmd(test_cmd, simple=False, log_ok=False, log_all=False)
-            if ec:
-                error_msg = "Scratch directory %s is not accessible via 'ssh'!\n" % self.scratch_dir
-                error_msg += "Specify a different path using the 'scratch_dir' easyconfig parameter.\n"
-                error_msg += "Output of test command '%s': %s" % (test_cmd, out)
-                raise EasyBuildError(error_msg)
-            else:
-                self.log.info("Using %s as scratch directory", self.scratch_dir)
-
-        # OpenBLAS requires linking against OpenMP
-        # if mathlib == 'openblas':
-        #     lked = os.path.join(self.builddir, 'lked')
-        #     try:
-        #         for line in fileinput.input(lked, inplace=1, backup='.orig'):
-        #             line = re.sub(r'libopenblas.a"', r'libopenblas.a -fopenmp "', line)
-        #             sys.stdout.write(line)
-        #     except IOError as err:
-        #         raise EasyBuildError("Failed to patch %s: %s", lked, err)
-
         # patch hardcoded settings in rungms to use values specified in easyconfig file
         rungms = os.path.join(self.builddir, 'rungms')
         extra_gmspath_lines = "set ERICFMT=$GMSPATH/auxdata/ericfmt.dat\nset MCPPATH=$GMSPATH/auxdata/MCP\n"
@@ -354,11 +319,3 @@ class EB_GAMESS_minus_US(EasyBlock):
         txt += self.module_generator.set_environment('GAMESSUSROOT', self.installdir)
         txt += self.module_generator.prepend_paths("PATH", [''])
         return txt
-
-    def cleanup_step(self):
-        """Cleanup set."""
-        # remove dedicated scratch directory (if any);
-        # we must use a shell command for this, since the path may contain environment variables
-        super(EB_GAMESS_minus_US, self).cleanup_step()
-
-        # FIXME
