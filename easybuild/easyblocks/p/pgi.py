@@ -46,6 +46,7 @@ from easybuild.framework.easyconfig.types import ensure_iterable_license_specs
 from easybuild.tools.filetools import adjust_permissions, find_flexlm_license, write_file
 from easybuild.tools.run import run_cmd
 from easybuild.tools.modules import get_software_root
+from easybuild.tools.systemtools import POWER, get_cpu_architecture
 
 
 # contents for siterc file to make PGI pick up $LIBRARY_PATH
@@ -95,12 +96,14 @@ class EB_PGI(PackedBinary):
         self.license_file = 'UNKNOWN'
         self.license_env_var = 'UNKNOWN'  # Probably not really necessary for PGI
 
-        self.pgi_install_subdir = os.path.join('linux86-64', self.version)
+        subdir_suffix = 'linuxpower' if get_cpu_architecture() == POWER else 'linux86-64'
+        self.pgi_install_subdir = os.path.join(subdir_suffix, self.version)
         self.pgi_install_subdirs = [self.pgi_install_subdir]
         if LooseVersion(self.version) > LooseVersion('18'):
-            self.pgi_install_subdirs.append(os.path.join('linux86-64-llvm', self.version))
+            self.pgi_install_subdirs.append(os.path.join('%s-llvm' % subdir_suffix, self.version))
 
     def configure_step(self):
+
         """
         Handle license file.
         """
