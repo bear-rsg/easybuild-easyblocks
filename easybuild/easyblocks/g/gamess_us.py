@@ -42,12 +42,11 @@ import shutil
 import sys
 import tempfile
 
-import easybuild.tools.toolchain as toolchain
 from easybuild.framework.easyblock import EasyBlock
 from easybuild.framework.easyconfig import CUSTOM, MANDATORY
 from easybuild.tools.build_log import EasyBuildError
 from easybuild.tools.config import build_option
-from easybuild.tools.filetools import mkdir, read_file, write_file
+from easybuild.tools.filetools import change_dir, read_file, write_file
 from easybuild.tools.modules import get_software_root, get_software_version
 from easybuild.tools.run import run_cmd, run_cmd_qa
 from easybuild.tools.systemtools import get_platform_name
@@ -62,7 +61,6 @@ class EB_GAMESS_minus_US(EasyBlock):
         """Define custom easyconfig parameters for GAMESS-US."""
         extra_vars = {
             'ddi_comm': ['mpi', "DDI communication layer to use", CUSTOM],
-            'cct3_ccsd3a': ['no', "Build Michigan State University CCT3 & CCSD3A methods?", CUSTOM],
             'maxcpus': [None, "Maximum number of cores per node", MANDATORY],
             'maxnodes': [None, "Maximum number of nodes", MANDATORY],
             'runtest': [True, "Run GAMESS-US tests", CUSTOM],
@@ -79,7 +77,10 @@ class EB_GAMESS_minus_US(EasyBlock):
             self.testdir = tempfile.mkdtemp()
             # make sure test dir doesn't contain [ or ], rungms csh script doesn't handle that well ("set: No match")
             if re.search(r'[\[\]]', self.testdir):
-                raise EasyBuildError("Temporary dir for tests '%s' will cause problems with rungms csh script", self.testdir)
+                raise EasyBuildError("Temporary dir for tests '%s' will cause problems with rungms csh script",
+                                     self.testdir)
+
+        self.scratch_dir = self.cfg['scratch_dir']
 
     def extract_step(self):
         """Extract sources."""
@@ -169,17 +170,19 @@ class EB_GAMESS_minus_US(EasyBlock):
             "MKL pathname? ": mathlib_root,
             "MKL version (or 'skip')? ": 'skip',
             "MKL version (or 'proceed')? ": 'proceed',  # changed in gamess-20170420R1
-            "enter this full pathname:": mathlib_root,
             "please hit <return> to compile the GAMESS source code activator": '',
             "please hit <return> to set up your network for Linux clusters.": '',
             "communication library ('sockets' or 'mpi')? ": self.cfg['ddi_comm'],
+            # changed in gamess-20190930-R2
             "communication library ('serial','sockets' or 'mpi' or 'mixed')? ": self.cfg['ddi_comm'],
             "Enter MPI library (impi, mvapich2, mpt, sockets):": mpilib,
             "Enter MPI library (impi, mpich, mpich2, mvapich2, mpt, sockets):": mpilib,  # changed in gamess-20170420R1
             "Please enter your %s's location: " % mpilib: mpilib_root,
             "Do you want to try LIBCCHEM?  (yes/no): ": 'no',
             "Enter full path to OpenBLAS libraries (without 'lib' subdirectory):": mathlib_root,
-            "Optional: Build Michigan State University CCT3 & CCSD3A methods?  (yes/no): ": self.cfg["cct3_ccsd3a"],
+            "enter this full pathname: ": ''.join([mathlib_root, '/lib']),  # changed in gamess-20190930-R2
+            # changed in gamess-20190930-R2
+            "Optional: Build Michigan State University CCT3 & CCSD3A methods?  (yes/no): ": 'no',
         }
         stdqa = {
             r"GAMESS directory\? \[.*\] ": self.builddir,
@@ -208,15 +211,17 @@ class EB_GAMESS_minus_US(EasyBlock):
             for line in fileinput.input(rungms, inplace=1, backup='.orig'):
                 line = re.sub(r"^(\s*set\s*TARGET)=.*", r"\1=%s" % self.cfg['ddi_comm'], line)
                 line = re.sub(r"^(\s*set\s*GMSPATH)=.*", r"\1=%s\n%s" % (self.installdir, extra_gmspath_lines), line)
+                # changed in gamess-20190930-R2 for OpenBLAS support
+                line = re.sub(r"^(\s*set\s*GMS_OPENMP)=.*", r"\1=%s" % "true", line)
                 line = re.sub(r"(null\) set VERNO)=.*", r"\1=%s" % self.version, line)
                 line = re.sub(r"^(\s*set DDI_MPI_CHOICE)=.*", r"\1=%s" % mpilib, line)
                 line = re.sub(r"^(\s*set DDI_MPI_ROOT)=.*%s.*" % mpilib.lower(), r"\1=%s" % mpilib_path, line)
                 line = re.sub(r"^(\s*set GA_MPI_ROOT)=.*%s.*" % mpilib.lower(), r"\1=%s" % mpilib_path, line)
                 # comment out all adjustments to $LD_LIBRARY_PATH that involves hardcoded paths
                 line = re.sub(r"^(\s*)(setenv\s*LD_LIBRARY_PATH\s*/.*)", r"\1#\2", line)
-                if self.cfg['scratch_dir']:
-                    line = re.sub(r"^(\s*set\s*SCR)=.*", r"\1=%s" % self.cfg['scratch_dir'], line)
-                    line = re.sub(r"^(\s*set\s*USERSCR)=.*", r"\1=%s" % self.cfg['scratch_dir'], line)
+                if self.scratch_dir:
+                    line = re.sub(r"^(\s*set\s*SCR)=.*", r"\1=%s" % self.scratch_dir, line)
+                    line = re.sub(r"^(\s*set\s*USERSCR)=.*", r"\1=%s" % self.scratch_dir, line)
                 sys.stdout.write(line)
         except IOError as err:
             raise EasyBuildError("Failed to patch %s: %s", rungms, err)
@@ -233,7 +238,7 @@ class EB_GAMESS_minus_US(EasyBlock):
         else:
             self.log.info("The libddi.a library (%s) was successfully built." % libddi)
 
-        ddikick =  os.path.join(self.cfg['start_dir'], 'ddi', 'ddikick.x')
+        ddikick = os.path.join(self.cfg['start_dir'], 'ddi', 'ddikick.x')
         if os.path.isfile(ddikick):
             self.log.info("The ddikick.x executable (%s) was successfully built." % ddikick)
 
@@ -259,11 +264,7 @@ class EB_GAMESS_minus_US(EasyBlock):
                 self.log.info("Skipping testing of GAMESS-US since MPI testing is disabled")
                 return
 
-            try:
-                cwd = os.getcwd()
-                os.chdir(self.testdir)
-            except OSError as err:
-                raise EasyBuildError("Failed to move to temporary directory for running tests: %s", err)
+            cwd = change_dir(self.testdir)
 
             # copy input files for exam<id> standard tests
             for test_input in glob.glob(os.path.join(self.installdir, 'tests', 'standard', 'exam*.inp')):
@@ -296,12 +297,7 @@ class EB_GAMESS_minus_US(EasyBlock):
             else:
                 raise EasyBuildError("Not all tests ran successfully...")
 
-            # cleanup
-            os.chdir(cwd)
-            try:
-                shutil.rmtree(self.testdir)
-            except OSError as err:
-                raise EasyBuildError("Failed to remove test directory %s: %s", self.testdir, err)
+            change_dir(cwd)
 
     def install_step(self):
         """Skip install step, since we're building in the install directory."""
