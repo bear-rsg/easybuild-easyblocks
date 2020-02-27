@@ -79,10 +79,11 @@ class EB_ROOT(CMakeMake):
             if python_root:
                 pyshortver = '.'.join(get_software_version('Python').split('.')[:2])
                 self.cfg.update('configopts', '-DPYTHON_EXECUTABLE=%s' % os.path.join(python_root, 'bin', 'python'))
-                python_inc_dir = os.path.join(python_root, 'include', 'python%s' % pyshortver)
-                self.cfg.update('configopts', '-DPYTHON_INCLUDE_DIR=%s' % python_inc_dir)
-                python_lib = os.path.join(python_root, 'lib', 'libpython%s.so' % pyshortver)
-                self.cfg.update('configopts', '-DPYTHON_LIBRARY=%s' % python_lib)
+                if LooseVersion(self.version.lstrip('v')) < LooseVersion('6.18'):
+                    python_inc_dir = os.path.join(python_root, 'include', 'python%s' % pyshortver)
+                    self.cfg.update('configopts', '-DPYTHON_INCLUDE_DIR=%s' % python_inc_dir)
+                    python_lib = os.path.join(python_root, 'lib', 'libpython%s.so' % pyshortver)
+                    self.cfg.update('configopts', '-DPYTHON_LIBRARY=%s' % python_lib)
 
             if get_software_root('X11'):
                 self.cfg.update('configopts', '-Dx11=ON')
