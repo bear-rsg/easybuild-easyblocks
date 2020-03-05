@@ -104,7 +104,7 @@ either in the Easyconfig or as the env var EB_ANSYS_EM_LICENSE_SERVER_PORT")
             ])
             with open(self.replayfile, "w") as f:
                 f.write(txt)
-        except IOError, err:
+        except IOError as err:
             raise EasyBuildError("Failed to create install properties file used for replaying installation: %s", err)
 
     def install_step(self):
