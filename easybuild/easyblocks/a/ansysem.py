@@ -76,7 +76,7 @@ either in the Easyconfig or as the env var EB_ANSYS_EM_LICENSE_SERVER")
 either in the Easyconfig or as the env var EB_ANSYS_EM_LICENSE_SERVER_PORT")
         licserver = licserv.split(',')
         servercount = len(licserver)
-        for i in range(servercount, 3):
+        for _ in range(servercount, 3):
             licserver.append("")
         tmpdir = self.cfg['ansysem_temp_dir']
         if tmpdir is None:
