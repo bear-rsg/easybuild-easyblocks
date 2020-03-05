@@ -47,9 +47,17 @@ class EB_ANSYSEM(PackedBinary):
     def extra_options():
         """Custom easyconfig parameters for ANSYS EM"""
         extra_vars = {
-            'ansysem_temp_dir': [None, "Select a default location for all simulations (including local) to use as a temporary work space.", CUSTOM],
-            'internal_version': [None, "Define the version number that ANSYS EM uses internally, e.g. '20.1' for '2020R1'.", CUSTOM],
-            }
+            'ansysem_temp_dir': [
+                None,
+                "Select a default location for all simulations (including local) to use as a temporary work space.",
+                CUSTOM
+            ],
+            'internal_version': [
+                None,
+                "Define the version number that ANSYS EM uses internally, e.g. '20.1' for '2020R1'.",
+                CUSTOM
+            ],
+        }
         return PackedBinary.extra_options(extra_vars)
 
     def configure_step(self):
@@ -111,10 +119,14 @@ either in the Easyconfig or as the env var EB_ANSYS_EM_LICENSE_SERVER_PORT")
             'PATH', ['AnsysEM%s/Linux64' % self.internal_version]
             )
         txt += self.module_generator.prepend_paths(
-            'LD_LIBRARY_PATH', ['AnsysEM%s/Linux64/mainwin540/Linux64/mw/lib-amd64_linux_optimized' % self.internal_version]
+            'LD_LIBRARY_PATH', [
+                'AnsysEM%s/Linux64/mainwin540/Linux64/mw/lib-amd64_linux_optimized' % self.internal_version
+            ]
             )
         txt += self.module_generator.prepend_paths(
-            'LIBRARY_PATH', ['AnsysEM%s/Linux64/mainwin540/Linux64/mw/lib-amd64_linux_optimized' % self.internal_version]
+            'LIBRARY_PATH', [
+                'AnsysEM%s/Linux64/mainwin540/Linux64/mw/lib-amd64_linux_optimized' % self.internal_version
+            ]
             )
         return txt
 
