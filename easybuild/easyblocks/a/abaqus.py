@@ -95,10 +95,10 @@ class EB_ABAQUS(Binary):
                 "Isight\n\nEnter selection \(default: Next\):": '6\n7\n\n',
                 "(?<!Isight)\n\nEnter selection \(default: Next\):": '',
                 r"Choose the installation directory.*:\n.*\n\n.*": os.path.join(self.installdir, 'sim'),
-		"Abaqus/CFD Solver\n\nEnter selection \(default: Next\):": '7\n8\n\n',
+                "Abaqus/CFD Solver\n\nEnter selection \(default: Next\):": '7\n8\n\n',
                 "(?<!Abaqus/CFD Solver)\n\nEnter selection \(default: Next\):": '',
-		"3 \( \) Skip licensing configuration\nEnter selection \(default: Next\):": '3\n\n',
-		r"Default.*SIMULIA/Commands\]:\s*": os.path.join(self.installdir, 'Commands'),
+                "3 \( \) Skip licensing configuration\nEnter selection \(default: Next\):": '3\n\n',
+                r"Default.*SIMULIA/Commands\]:\s*": os.path.join(self.installdir, 'Commands'),
                 r"Default.*SIMULIA/CAE/plugins.*:\s*": os.path.join(self.installdir, 'cae/plugins'),
 		r"SIMULIA[0-9]*doc.*:": os.path.join(self.installdir, 'doc'),
                 r"SimulationServices.*:": os.path.join(self.installdir, 'sim'),
@@ -112,7 +112,7 @@ class EB_ABAQUS(Binary):
                 r"SIMULIA/Tosca.*:": os.path.join(self.installdir, 'tosca'),
                 r"location of your existing ANSA installation.*(\n.*){8}:": '',
                 r"FLUENT Path.*(\n.*){7}:": '',
-		"Enter selection \(default: Close\):": '\n',
+                "Enter selection \(default: Close\):": '\n',
             }
             run_cmd_qa('./StartTUI.sh', qa, no_qa=no_qa, std_qa=std_qa, log_all=True, simple=True, maxhits=100)
         else:
@@ -193,7 +193,7 @@ class EB_ABAQUS(Binary):
         if LooseVersion(self.version) >= LooseVersion('2016'):
             # custom_paths['dirs'].extend(['cae', 'Commands', 'doc', 'sim'])
             custom_paths['dirs'].extend(['cae', 'Commands', 'sim'])
-	    # 'all' also check license server, but lmstat is usually not available
+            # 'all' also check license server, but lmstat is usually not available
             custom_commands.append("abaqus information=system")
         else:
             verparts = self.version.split('-')[0].split('.')
