@@ -100,7 +100,7 @@ class EB_ABAQUS(Binary):
                 "3 \( \) Skip licensing configuration\nEnter selection \(default: Next\):": '3\n\n',
                 r"Default.*SIMULIA/Commands\]:\s*": os.path.join(self.installdir, 'Commands'),
                 r"Default.*SIMULIA/CAE/plugins.*:\s*": os.path.join(self.installdir, 'cae/plugins'),
-		r"SIMULIA[0-9]*doc.*:": os.path.join(self.installdir, 'doc'),
+                r"SIMULIA[0-9]*doc.*:": os.path.join(self.installdir, 'doc'),
                 r"SimulationServices.*:": os.path.join(self.installdir, 'sim'),
                 r"Choose the CODE installation directory.*:\n.*\n\n.*:": os.path.join(self.installdir, 'sim'),
                 r"SIMULIA/CAE.*:": os.path.join(self.installdir, 'cae'),
