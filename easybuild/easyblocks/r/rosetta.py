@@ -121,9 +121,18 @@ class EB_Rosetta(EasyBlock):
         self.log.debug("List of extra environment variables to pass down: %s" % str(env_vars))
 
         # create user.settings file
-        paths = os.getenv('PATH').split(':')
-        ld_library_paths = os.getenv('LD_LIBRARY_PATH').split(':')
-        cpaths = os.getenv('CPATH').split(':')
+        paths = []
+        for x in os.getenv('PATH').split(':'):
+            if 'libxml' not in x:
+                paths.append(x)
+        ld_library_paths = []
+        for x in os.getenv('LD_LIBRARY_PATH').split(':'):
+            if 'libxml' not in x:
+                ld_library_paths.append(x)
+        cpaths = []
+        for x in os.getenv('CPATH').split(':'):
+            if 'libxml' not in x:
+                cpaths.append(x)
         flags = [str(f).strip('-') for f in self.toolchain.variables['CXXFLAGS'].copy()]
 
         txt = '\n'.join([
@@ -257,11 +266,21 @@ class EB_Rosetta(EasyBlock):
         else:
             extract_and_copy('rosetta_tools%s', optional=True)
 
+        cmd = "python %s" % os.path.join(self.installdir, 'tools', 'rna_tools', 'sym_link.py')
+        run_cmd(cmd, log_all=True, simple=True)
+
     def make_module_extra(self):
         """Define extra environment variables specific to Rosetta."""
         txt = super(EB_Rosetta, self).make_module_extra()
         txt += self.module_generator.set_environment('ROSETTA3_DB', os.path.join(self.installdir, 'database'))
         return txt
+
+    def make_module_req_guess(self):
+        """Additional subdirectories specific to Rosetta for $PATH, $PYTHONPATH"""
+        guesses = super(EB_Rosetta, self).make_module_req_guess()
+        guesses['PATH'].append('tools/rna_tools/bin')
+        guesses.setdefault('PYTHONPATH', []).extend(['tools/rna_tools/bin'])
+        return guesses
 
     def sanity_check_step(self):
         """Custom sanity check for Rosetta."""
