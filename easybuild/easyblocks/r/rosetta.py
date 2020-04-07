@@ -109,7 +109,7 @@ class EB_Rosetta(EasyBlock):
         self.cfg.update('buildopts', "cxx=%s cxx_ver=%s" % (self.cxx, cxx_ver))
 
         if self.toolchain.options.get('usempi', None):
-            self.cfg.update('buildopts', 'extras=mpi')
+            self.cfg.update('buildopts', 'extras=mpi,serialization')
             defines.extend(['USEMPI', 'MPICH_IGNORE_CXX_SEEK'])
 
         # make sure important environment variables are passed down
@@ -292,7 +292,7 @@ class EB_Rosetta(EasyBlock):
 
         infix = ''
         if self.toolchain.options.get('usempi', None):
-            infix = 'mpi.'
+            infix = 'mpiserialization.'
 
         binaries = ["AbinitioRelax", "backrub", "cluster", "combine_silent", "extract_pdbs",
                     "idealize_jd2", "packstat", "relax", "score_jd2", "score"]
