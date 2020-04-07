@@ -292,7 +292,7 @@ class EB_Rosetta(EasyBlock):
 
         infix = ''
         if self.toolchain.options.get('usempi', None):
-            infix = 'mpi.'
+            infix = 'mpiserialization.'
 
         binaries = ["AbinitioRelax", "backrub", "cluster", "combine_silent", "extract_pdbs",
                     "idealize_jd2", "packstat", "relax", "score_jd2", "score"]
