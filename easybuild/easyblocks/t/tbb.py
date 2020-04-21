@@ -47,7 +47,7 @@ from easybuild.tools.modules import get_software_version
 from easybuild.tools.systemtools import POWER, get_cpu_architecture, get_gcc_version, get_platform_name
 
 
-def get_tbb_gccprefix(libpath):
+def get_tbb_gccprefix():
     """
     Find the correct gcc version for the lib dir of TBB
     """
@@ -64,7 +64,7 @@ def get_tbb_gccprefix(libpath):
         gccversion = LooseVersion(gccversion)
         if gccversion >= LooseVersion("4.1") and gccversion < LooseVersion("4.4"):
             tbb_gccprefix = 'gcc4.1'  # gcc version number between 4.1 and 4.4 that do not support exception_ptr
-        elif os.path.isdir(os.path.join(libpath, 'gcc4.8')) and gccversion >= LooseVersion("4.8"):
+        elif gccversion >= LooseVersion("4.8"):
             tbb_gccprefix = 'gcc4.8'
 
     return tbb_gccprefix
@@ -157,7 +157,7 @@ class EB_tbb(IntelBase, ConfigureMake):
                 else:
                     raise EasyBuildError("No libs found using %s in %s", libglob, self.installdir)
             else:
-                libdir = get_tbb_gccprefix(self.libpath)
+                libdir = get_tbb_gccprefix()
 
             self.libpath = os.path.join(self.libpath, libdir)
             self.log.debug("self.libpath: %s" % self.libpath)
