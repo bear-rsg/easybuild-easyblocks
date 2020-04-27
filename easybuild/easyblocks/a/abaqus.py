@@ -96,7 +96,7 @@ class EB_ABAQUS(Binary):
                     # disable installation of Isight (7) and enable installation of documentation (3)
                     r"Isight\n\nEnter selection \(default: Next\):": '3\n7\n\n',
                     # No Tosca (7 and 8), but do not trigger answering a later question that has no Tosca options
-                    r"21 \[\*\] Abaqus/CFD Solver\n\nEnter selection \(default: Next\):": '7\n8\n\n',
+                    r"21.*\n\nEnter selection \(default: Next\):": '7\n8\n\n',
                     r"(?<!Isight)\n\nEnter selection \(default: Next\):": '',
                     r"Default.*SIMULIA/EstProducts.*:": os.path.join(self.installdir, 'cae'),
                     r"SIMULIA[0-9]*doc.*:": os.path.join(self.installdir, 'doc'),
@@ -130,7 +130,7 @@ class EB_ABAQUS(Binary):
                     r"location of your existing ANSA installation.*(\n.*){8}:": '',
                     r"FLUENT Path.*(\n.*){7}:": '',
                 }
-            run_cmd_qa('./StartTUI.sh', qa, no_qa=no_qa, std_qa=std_qa, log_all=True, simple=True, maxhits=200)
+            run_cmd_qa('./StartTUI.sh', qa, no_qa=no_qa, std_qa=std_qa, log_all=True, simple=True, maxhits=500)
         else:
             change_dir(self.builddir)
             if self.cfg['install_cmd'] is None:
