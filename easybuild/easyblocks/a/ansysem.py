@@ -31,7 +31,7 @@ import os
 from easybuild.easyblocks.generic.packedbinary import PackedBinary
 from easybuild.tools.build_log import EasyBuildError
 from easybuild.tools.run import run_cmd
-from easybuild.framework.easyconfig import CUSTOM, MANDATORY
+from easybuild.framework.easyconfig import CUSTOM
 
 
 class EB_ANSYSEM(PackedBinary):
