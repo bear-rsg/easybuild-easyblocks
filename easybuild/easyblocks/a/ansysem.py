@@ -41,7 +41,11 @@ class EB_ANSYSEM(PackedBinary):
         """Initialisation of custom class variables for Ansys Electromagnetics."""
         super(EB_ANSYSEM, self).__init__(*args, **kwargs)
         self.replayfile = None
-        self.internal_version = None
+        if self.cfg['internal_version']:
+            self.internal_version = self.cfg['internal_version']
+        else:
+            self.internal_version = self.version
+
 
     @staticmethod
     def extra_options():
@@ -81,10 +85,6 @@ either in the Easyconfig or as the env var EB_ANSYS_EM_LICENSE_SERVER_PORT")
         tmpdir = self.cfg['ansysem_temp_dir']
         if tmpdir is None:
             tmpdir = "/tmp"
-        if self.cfg['internal_version']:
-            self.internal_version = self.cfg['internal_version']
-        else:
-            self.internal_version = self.version
         try:
             self.replayfile = os.path.join(self.builddir, "installer_properties.iss")
             txt = '\n'.join([
