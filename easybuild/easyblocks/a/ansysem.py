@@ -46,7 +46,6 @@ class EB_ANSYSEM(PackedBinary):
         else:
             self.internal_version = self.version
 
-
     @staticmethod
     def extra_options():
         """Custom easyconfig parameters for ANSYS EM"""
