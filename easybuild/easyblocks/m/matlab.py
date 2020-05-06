@@ -43,7 +43,7 @@ from distutils.version import LooseVersion
 from easybuild.easyblocks.generic.packedbinary import PackedBinary
 from easybuild.framework.easyconfig import CUSTOM
 from easybuild.tools.build_log import EasyBuildError
-from easybuild.tools.filetools import adjust_permissions, change_dir, read_file, write_file
+from easybuild.tools.filetools import adjust_permissions, change_dir, read_file, write_file, remove_file
 from easybuild.tools.py2vs3 import string_type
 from easybuild.tools.run import run_cmd
 from easybuild.tools.systemtools import get_shared_lib_ext
@@ -140,19 +140,54 @@ class EB_MATLAB(PackedBinary):
         if isinstance(keys, string_type):
             keys = keys.split(',')
 
+        # Compile the regex for replacing the installation key in the binary installer method
+        regkey = re.compile(r"^# fileInstallationKey=.*", re.M)
+
         # Make one install for each key
-        for key in keys:
-            cmd = ' '.join([
-                self.cfg['preinstallopts'],
-                src,
-                '-v',
-                tmpdir,
-                '-inputFile',
-                self.configfile,
-                '-fileInstallationKey',
-                key,
-                self.cfg['installopts'],
-            ])
+        for i, key in enumerate(keys):
+
+            self.log.debug('Installing with key %s of %s', i + 1, len(keys))
+
+            if LooseVersion(self.version) >= LooseVersion('2020a'):
+
+                self.log.debug('Version is %s - using binary installer method', self.version)
+
+                try:
+                    fd, tmp_configfile = tempfile.mkstemp()
+                    shutil.copyfile(self.configfile, tmp_configfile)
+
+                    tmp_config = read_file(tmp_configfile)
+                    tmp_config = regkey.sub("fileInstallationKey=%s" % key, tmp_config)
+                    write_file(tmp_configfile, tmp_config)
+
+                    self.log.debug('temp config file written to %s:\n %s', tmp_configfile, tmp_config)
+
+                    cmd = ' '.join([
+                        self.cfg['preinstallopts'],
+                        src,
+                        '-inputFile',
+                        tmp_configfile,
+                        self.cfg['installopts'],
+                    ])
+                except IOError as err:
+                    raise EasyBuildError("Failed to create temporary config file %s: %s", tmp_configfile, err)
+
+            else:
+
+                self.log.debug('Version is %s - using script installer method', self.version)
+
+                cmd = ' '.join([
+                    self.cfg['preinstallopts'],
+                    src,
+                    '-v',
+                    tmpdir,
+                    '-inputFile',
+                    self.configfile,
+                    '-fileInstallationKey',
+                    key,
+                    self.cfg['installopts'],
+                ])
+
             (out, _) = run_cmd(cmd, log_all=True, simple=False)
 
             # check installer output for known signs of trouble
@@ -164,6 +199,10 @@ class EB_MATLAB(PackedBinary):
                 if regex.search(out):
                     raise EasyBuildError("Found error pattern '%s' in output of installation command '%s': %s",
                                          regex.pattern, cmd, out)
+
+            # Clean-up this install's temp file
+            os.close(fd)
+            remove_file(tmp_configfile)
 
     def sanity_check_step(self):
         """Custom sanity check for MATLAB."""
