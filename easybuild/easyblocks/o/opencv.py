@@ -87,7 +87,8 @@ class EB_OpenCV(CMakeMake):
                     if LooseVersion(self.version) >= LooseVersion('3.4.4'):
                         self.cfg.update('configopts', '-DOPENCV_DOWNLOAD_PATH=%s' % self.builddir)
                 else:
-                    raise EasyBuildError("Found multiple ippicv*.tgz source tarballs in %s: %s", self.builddir, ippicv_tgz)
+                    raise EasyBuildError("Found multiple ippicv*.tgz source tarballs in %s: %s",
+                                         self.builddir, ippicv_tgz)
 
     def configure_step(self):
         """Custom configuration procedure for OpenCV."""
