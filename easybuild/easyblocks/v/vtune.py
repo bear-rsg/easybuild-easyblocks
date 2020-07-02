@@ -42,13 +42,16 @@ class EB_VTune(IntelBase):
         """Easyblock constructor; define class variables."""
         super(EB_VTune, self).__init__(*args, **kwargs)
 
-        # recent versions of VTune are installed to a subdirectory
-        self.subdir = ''
+        # The VTune subdirectory name varies depending on version
         loosever = LooseVersion(self.version)
-        if loosever >= LooseVersion('2013_update12') and loosever < LooseVersion('2018'):
-            self.subdir = 'vtune_amplifier_xe'
+        if loosever >= LooseVersion('2020'):
+            self.subdir = 'vtune_profiler'
         elif loosever >= LooseVersion('2018'):
             self.subdir = 'vtune_amplifier'
+        elif loosever >= LooseVersion('2013_update12'):
+            self.subdir = 'vtune_amplifier_xe'
+        else:
+            self.subdir = ''
 
     def prepare_step(self, *args, **kwargs):
         """Since 2019u3 there is no license required."""
