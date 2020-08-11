@@ -107,7 +107,6 @@ class EB_NAMD(MakeCp):
         self.cfg.update('charm_arch', charm_arch_comp)
 
         self.log.info("Updated 'charm_arch': %s" % self.cfg['charm_arch'])
-
         self.namd_arch = '%s-%s' % (self.cfg['namd_basearch'], namd_comp)
         self.log.info("Completed NAMD target architecture: %s" % self.namd_arch)
 
