@@ -145,9 +145,6 @@ class EB_PyTorch(PythonPackage):
         self.log.info('Did not enable options for the following dependencies as they are not used in the EC: %s',
                       not_used_dep_names)
 
-        # Always use Infiniband
-        # options.append('USE_IBVERBS=1')
-
         cuda = get_software_root('CUDA')
         if cuda:
             cudnn_root = get_software_root('cuDNN')
@@ -163,7 +160,6 @@ class EB_PyTorch(PythonPackage):
             # list of CUDA compute capabilities to use can be specifed in two ways (where (2) overrules (1)):
             # (1) in the easyconfig file, via the custom cuda_compute_capabilities;
             # (2) in the EasyBuild configuration, via --cuda-compute-capabilities configuration option;
-            # cuda_cc = build_option('cuda_compute_capabilities') or self.cfg['cuda_compute_capabilities']
             cuda_cc = self.cfg['cuda_compute_capabilities']
             if not cuda_cc:
                 raise EasyBuildError("List of CUDA compute capabilities must be specified, either via " +
