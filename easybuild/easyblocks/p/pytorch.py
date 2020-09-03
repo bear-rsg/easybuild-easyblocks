@@ -35,7 +35,6 @@ from distutils.version import LooseVersion
 from easybuild.easyblocks.generic.pythonpackage import PythonPackage
 from easybuild.framework.easyconfig import CUSTOM
 from easybuild.tools.build_log import EasyBuildError
-from easybuild.tools.config import build_option
 import easybuild.tools.environment as env
 from easybuild.tools.modules import get_software_root
 from easybuild.tools.systemtools import POWER, get_cpu_architecture
