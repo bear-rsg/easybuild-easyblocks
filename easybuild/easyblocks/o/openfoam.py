@@ -1,5 +1,5 @@
 ##
-# Copyright 2009-2019 Ghent University
+# Copyright 2009-2020 Ghent University
 #
 # This file is part of EasyBuild,
 # originally created by the HPC team of Ghent University (http://ugent.be/hpc/en),
@@ -44,12 +44,13 @@ from distutils.version import LooseVersion
 
 import easybuild.tools.environment as env
 import easybuild.tools.toolchain as toolchain
+from easybuild.easyblocks.generic.cmakemake import setup_cmake_env
 from easybuild.framework.easyblock import EasyBlock
 from easybuild.tools.build_log import EasyBuildError
 from easybuild.tools.filetools import adjust_permissions, apply_regex_substitutions, mkdir
 from easybuild.tools.modules import get_software_root, get_software_version
 from easybuild.tools.run import run_cmd, run_cmd_qa
-from easybuild.tools.systemtools import get_shared_lib_ext
+from easybuild.tools.systemtools import get_shared_lib_ext, get_cpu_architecture, AARCH64
 
 
 class EB_OpenFOAM(EasyBlock):
@@ -174,7 +175,7 @@ class EB_OpenFOAM(EasyBlock):
                 key = "WM_PROJECT_VERSION"
                 regex_subs += [(r"^(setenv|export) %s=.*$" % key, r"export %s=%s #\g<0>" % (key, self.version))]
 
-            WM_env_var = ['WM_COMPILER', 'WM_MPLIB', 'WM_THIRD_PARTY_DIR']
+            WM_env_var = ['WM_COMPILER', 'WM_COMPILE_OPTION', 'WM_MPLIB', 'WM_THIRD_PARTY_DIR']
             # OpenFOAM >= 3.0.0 can use 64 bit integers
             if 'extend' not in self.name.lower() and self.looseversion >= LooseVersion('3.0'):
                 WM_env_var.append('WM_LABEL_SIZE')
@@ -285,9 +286,16 @@ class EB_OpenFOAM(EasyBlock):
     def build_step(self):
         """Build OpenFOAM using make after sourcing script to set environment."""
 
+        # Some parts of OpenFOAM uses CMake to build
+        # make sure the basic environment is correct
+        setup_cmake_env(self.toolchain)
+
         precmd = "source %s" % os.path.join(self.builddir, self.openfoamdir, "etc", "bashrc")
         if 'extend' not in self.name.lower() and self.looseversion >= LooseVersion('4.0'):
-            cleancmd = "cd $WM_PROJECT_DIR && wcleanPlatform -all && cd -"
+            if self.looseversion >= LooseVersion('2006'):
+                cleancmd = "cd $WM_PROJECT_DIR && wclean -platform -all && cd -"
+            else:
+                cleancmd = "cd $WM_PROJECT_DIR && wcleanPlatform -all && cd -"
         else:
             cleancmd = "wcleanAll"
 
@@ -342,7 +350,13 @@ class EB_OpenFOAM(EasyBlock):
         shlib_ext = get_shared_lib_ext()
 
         # OpenFOAM >= 3.0.0 can use 64 bit integers
-        if 'extend' not in self.name.lower() and self.looseversion >= LooseVersion('3.0'):
+        # same goes for OpenFOAM-Extend >= 4.1
+        if 'extend' in self.name.lower():
+            set_int_size = self.looseversion >= LooseVersion('4.1')
+        else:
+            set_int_size = self.looseversion >= LooseVersion('3.0')
+
+        if set_int_size:
             if self.toolchain.options['i8']:
                 int_size = 'Int64'
             else:
@@ -350,7 +364,15 @@ class EB_OpenFOAM(EasyBlock):
         else:
             int_size = ''
 
-        psubdir = "linux64%sDP%s%s" % (self.wm_compiler, int_size, self.build_type)
+        archpart = '64'
+        if get_cpu_architecture() == AARCH64:
+            # Variants have different abbreviations for ARM64...
+            if self.looseversion < LooseVersion("100"):
+                archpart = 'Arm64'
+            else:
+                archpart = 'ARM64'
+
+        psubdir = "linux%s%sDP%s%s" % (archpart, self.wm_compiler, int_size, self.build_type)
 
         openfoam_extend_v3 = 'extend' in self.name.lower() and self.looseversion >= LooseVersion('3.0')
         if openfoam_extend_v3 or self.looseversion < LooseVersion("2"):
