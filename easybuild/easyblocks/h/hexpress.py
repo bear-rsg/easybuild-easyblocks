@@ -65,4 +65,3 @@ class EB_HEXPRESS(EasyBlock):
                 shutil.copytree(src, target)
         except OSError as err:
             raise EasyBuildError("Failed to copy HEXPRESS files to %s: %s", target, err)
-
