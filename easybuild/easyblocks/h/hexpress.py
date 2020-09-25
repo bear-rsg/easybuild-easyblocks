@@ -34,6 +34,7 @@ from easybuild.framework.easyblock import EasyBlock
 from easybuild.tools.run import run_cmd
 from easybuild.tools.build_log import EasyBuildError
 
+
 class EB_HEXPRESS(EasyBlock):
     """
     Support for installing HEXPRESS
