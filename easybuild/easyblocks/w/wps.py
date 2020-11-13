@@ -153,6 +153,10 @@ class EB_WPS(EasyBlock):
         # patch arch/Config.pl script, so that run_cmd_qa receives all output to answer questions
         patch_perl_script_autoflush(os.path.join("arch", "Config.pl"))
 
+        # Fix hardcoded cpp paths
+        regex_subs = [('/usr/bin/cpp', 'cpp')]
+        apply_regex_substitutions('arch/configure.defaults', regex_subs)
+
         # configure
 
         # determine build type option to look for
@@ -202,7 +206,7 @@ class EB_WPS(EasyBlock):
             raise EasyBuildError("Unknown build type: '%s'. Supported build types: %s", bt, knownbuildtypes.keys())
 
         # fetch option number based on build type option and selected build type
-        build_type_question = "\s*(?P<nr>[0-9]+).\s*%s\s*\(?%s\)?\s*\n" % (build_type_option, knownbuildtypes[bt])
+        build_type_question = r"\s*(?P<nr>[0-9]+).\s*%s\s*\(?%s\)?\s*\n" % (build_type_option, knownbuildtypes[bt])
 
         cmd = "./configure"
         qa = {}
