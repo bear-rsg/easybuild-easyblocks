@@ -153,6 +153,10 @@ class EB_WPS(EasyBlock):
         # patch arch/Config.pl script, so that run_cmd_qa receives all output to answer questions
         patch_perl_script_autoflush(os.path.join("arch", "Config.pl"))
 
+        # Fix hardcoded cpp paths
+        regex_subs = [('/usr/bin/cpp', 'cpp')]
+        apply_regex_substitutions('arch/configure.defaults', regex_subs)
+
         # configure
 
         # determine build type option to look for
