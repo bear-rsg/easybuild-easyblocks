@@ -91,7 +91,7 @@ class EB_MATLAB(PackedBinary):
             if LooseVersion(self.version) == LooseVersion('2020a'):
                 cmd =  self.cfg['preconfigopts']
                 run_cmd(cmd, log_all=True, simple=False)
-            
+
             shutil.copyfile(os.path.join(self.cfg['start_dir'], 'installer_input.txt'), self.configfile)
             config = read_file(self.configfile)
 
@@ -158,7 +158,7 @@ class EB_MATLAB(PackedBinary):
                         with open(self.configfile) as template_fd:
                             tmp_config = template_fd.read()
                         tmp_config = tmp_config.replace('# fileInstallationKey=', 'fileInstallationKey=%s' % key)
-                        fd.write(tmp_config)
+                        fd.write(tmp_config.encode('utf-8'))
 
                         self.log.debug('temp config file written to %s:\n %s', tmp_configfile, tmp_config)
 
