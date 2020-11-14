@@ -89,7 +89,7 @@ class EB_MATLAB(PackedBinary):
         try:
             # remove non-ascii characters from installer_input.txt (2020a)
             if LooseVersion(self.version) == LooseVersion('2020a'):
-                cmd =  self.cfg['preconfigopts']
+                cmd = self.cfg['preconfigopts']
                 run_cmd(cmd, log_all=True, simple=False)
 
             shutil.copyfile(os.path.join(self.cfg['start_dir'], 'installer_input.txt'), self.configfile)
