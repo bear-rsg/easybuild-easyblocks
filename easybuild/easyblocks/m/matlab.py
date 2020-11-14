@@ -43,7 +43,7 @@ from distutils.version import LooseVersion
 from easybuild.easyblocks.generic.packedbinary import PackedBinary
 from easybuild.framework.easyconfig import CUSTOM
 from easybuild.tools.build_log import EasyBuildError
-from easybuild.tools.filetools import apply_regex_substitutions, adjust_permissions, change_dir, read_file, write_file
+from easybuild.tools.filetools import adjust_permissions, change_dir, read_file, write_file
 from easybuild.tools.py2vs3 import string_type
 from easybuild.tools.run import run_cmd
 from easybuild.tools.systemtools import get_shared_lib_ext
@@ -87,12 +87,11 @@ class EB_MATLAB(PackedBinary):
             write_file(licfile, lictxt)
 
         try:
+            # remove non-ascii characters from installer_input.txt (2020a)
             if LooseVersion(self.version) == LooseVersion('2020a'):
                 cmd =  self.cfg['preconfigopts']
                 run_cmd(cmd, log_all=True, simple=False)
-            # test_file = os.path.join(self.cfg['start_dir'], 'version.txt')
-            # regex_subs = [(r'R2020a', r'R2000b')]
-            # apply_regex_substitutions(test_file, regex_subs)
+            
             shutil.copyfile(os.path.join(self.cfg['start_dir'], 'installer_input.txt'), self.configfile)
             config = read_file(self.configfile)
 
@@ -159,7 +158,7 @@ class EB_MATLAB(PackedBinary):
                         with open(self.configfile) as template_fd:
                             tmp_config = template_fd.read()
                         tmp_config = tmp_config.replace('# fileInstallationKey=', 'fileInstallationKey=%s' % key)
-                        fd.write(tmp_config.encode('utf-8'))
+                        fd.write(tmp_config)
 
                         self.log.debug('temp config file written to %s:\n %s', tmp_configfile, tmp_config)
 
