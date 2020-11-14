@@ -87,8 +87,8 @@ class EB_MATLAB(PackedBinary):
             write_file(licfile, lictxt)
 
         try:
-            # remove non-ascii characters from installer_input.txt (2020a)
-            if LooseVersion(self.version) == LooseVersion('2020a'):
+            # remove non-ascii characters from installer_input.txt
+            if LooseVersion(self.version) >= LooseVersion('2020a'):
                 cmd = self.cfg['preconfigopts']
                 run_cmd(cmd, log_all=True, simple=False)
 
