@@ -78,7 +78,10 @@ class EB_MrBayes(ConfigureMake):
                 raise EasyBuildError("beagle-lib module not loaded?")
 
             if self.toolchain.options.get('usempi', None):
-                self.cfg.update('configopts', '--enable-mpi')
+                if LooseVersion(self.version) < LooseVersion("3.2.7"):
+                    self.cfg.update('configopts', '--enable-mpi')
+                else:
+                    self.cfg.update('configopts', '--with-mpi')
 
             # configure
             super(EB_MrBayes, self).configure_step()
