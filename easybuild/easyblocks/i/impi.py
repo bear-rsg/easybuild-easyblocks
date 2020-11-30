@@ -41,6 +41,7 @@ from easybuild.easyblocks.generic.intelbase import IntelBase, ACTIVATION_NAME_20
 from easybuild.framework.easyconfig import CUSTOM
 from easybuild.tools.build_log import EasyBuildError
 from easybuild.tools.filetools import apply_regex_substitutions, change_dir, extract_file, mkdir, write_file
+from easybuild.tools.modules import get_software_root
 from easybuild.tools.run import run_cmd
 from easybuild.tools.systemtools import get_shared_lib_ext
 from easybuild.tools.toolchain.mpi import get_mpi_cmd_template
@@ -259,9 +260,9 @@ EULA=accept
         else:
             guesses = {}
             if LooseVersion(self.version) >= LooseVersion('2019'):
-                # Keep release_mt and release in front, to give them priority over the possible symlinks in intel64/lib.
-                # IntelMPI 2019 changed the default library to be the non-mt version.
-                lib_dirs = ['intel64/%s' % x for x in ['lib/release_mt', 'lib/release', 'lib']]
+                # The "release" library is default in v2019. Give it precedence over intel64/lib.
+                # (remember paths are *prepended*, so the last path in the list has highest priority)
+                lib_dirs = ['intel64/%s' % x for x in ['lib', 'lib/release']]
                 include_dirs = ['intel64/include']
                 path_dirs = ['intel64/bin']
                 if self.cfg['ofi_internal']:
@@ -315,5 +316,12 @@ EULA=accept
             txt += self.module_generator.set_alias('mpiicpc', 'mpiicpc -cxx=icpc')
             # -fc also works, but -f90 takes precedence
             txt += self.module_generator.set_alias('mpiifort', 'mpiifort -f90=ifort')
+
+        # set environment variable UCX_TLS to 'all', this will work in all setups
+        # needed with UCX regardless of the transports available (even without a Mellanox HCA)
+        # since impi v2019.8, the MLX provider works without UCX_TLS, but setting it does not hurt
+        ucx_root = get_software_root('UCX')
+        if ucx_root:
+            txt += self.module_generator.set_environment('UCX_TLS', 'all')
 
         return txt
