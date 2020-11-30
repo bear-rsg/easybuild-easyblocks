@@ -53,8 +53,7 @@ class EB_MrBayes(ConfigureMake):
         # set generic make options
         self.cfg.update('buildopts', 'CC="%s" OPTFLAGS="%s"' % (os.getenv('MPICC'), os.getenv('CFLAGS')))
 
-        if LooseVersion(self.version) >= LooseVersion("3.2"):
-
+        if LooseVersion(self.version) >= LooseVersion("3.2") and LooseVersion(self.version) < LooseVersion("3.2.7"):
             # set correct start_dir dir, and change into it
             # test whether it already contains 'src', since a reprod easyconfig would
             if os.path.basename(self.cfg['start_dir']) != 'src':
@@ -68,6 +67,7 @@ class EB_MrBayes(ConfigureMake):
             cmd = "autoconf"
             run_cmd(cmd)
 
+        if LooseVersion(self.version) >= LooseVersion("3.2"):
             # set config opts
             beagle = get_software_root('beagle-lib')
             if beagle:
@@ -78,7 +78,10 @@ class EB_MrBayes(ConfigureMake):
                 raise EasyBuildError("beagle-lib module not loaded?")
 
             if self.toolchain.options.get('usempi', None):
-                self.cfg.update('configopts', '--enable-mpi')
+                if LooseVersion(self.version) < LooseVersion("3.2.7"):
+                    self.cfg.update('configopts', '--enable-mpi')
+                else:
+                    self.cfg.update('configopts', '--with-mpi')
 
             # configure
             super(EB_MrBayes, self).configure_step()
@@ -90,13 +93,17 @@ class EB_MrBayes(ConfigureMake):
     def install_step(self):
         """Install by copying bniaries to install dir."""
 
-        bindir = os.path.join(self.installdir, 'bin')
-        mkdir(bindir)
+        if LooseVersion(self.version) >= LooseVersion("3.2.7"):
+            super(EB_MrBayes, self).install_step()
 
-        src = os.path.join(self.cfg['start_dir'], 'mb')
-        dst = os.path.join(bindir, 'mb')
-        copy_file(src, dst)
-        self.log.info("Successfully copied %s to %s", src, dst)
+        else:
+            bindir = os.path.join(self.installdir, 'bin')
+            mkdir(bindir)
+
+            src = os.path.join(self.cfg['start_dir'], 'mb')
+            dst = os.path.join(bindir, 'mb')
+            copy_file(src, dst)
+            self.log.info("Successfully copied %s to %s", src, dst)
 
     def sanity_check_step(self):
         """Custom sanity check for MrBayes."""
