@@ -61,6 +61,13 @@ class EB_OpenMPI(ConfigureMake):
             if config_opt_unused(key, enable_opt=True):
                 self.cfg.update('configopts', '--enable-%s' % key)
 
+        # handle dependencies
+        for dep in ['CUDA', 'hwloc', 'libevent', 'PMIx', 'UCX']:
+            if config_opt_unused(dep.lower()):
+                dep_root = get_software_root(dep)
+                if dep_root:
+                    self.cfg.update('configopts', '--with-%s=%s' % (dep.lower(), dep_root))
+
         # check whether VERBS support should be enabled
         if config_opt_unused('verbs'):
 
@@ -71,17 +78,10 @@ class EB_OpenMPI(ConfigureMake):
                     verbs = True
                     break
 
-            if verbs:
+            if verbs and '--with-ucx' not in self.cfg['configopts']:
                 self.cfg.update('configopts', '--with-verbs')
             else:
                 self.cfg.update('configopts', '--without-verbs')
-
-        # handle dependencies
-        for dep in ['CUDA', 'hwloc', 'libevent', 'PMIx', 'UCX']:
-            if config_opt_unused(dep.lower()):
-                dep_root = get_software_root(dep)
-                if dep_root:
-                    self.cfg.update('configopts', '--with-%s=%s' % (dep.lower(), dep_root))
 
         super(EB_OpenMPI, self).configure_step()
 
