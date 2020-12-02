@@ -78,7 +78,7 @@ class EB_OpenMPI(ConfigureMake):
                     verbs = True
                     break
 
-            if verbs  and '--with-ucx' not in self.cfg['configopts']:
+            if verbs and '--with-ucx' not in self.cfg['configopts']:
                 self.cfg.update('configopts', '--with-verbs')
             else:
                 self.cfg.update('configopts', '--without-verbs')
