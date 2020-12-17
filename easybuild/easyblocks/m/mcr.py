@@ -72,6 +72,9 @@ class EB_MCR(PackedBinary):
         configfile = os.path.join(self.builddir, self.configfilename)
         if LooseVersion(self.version) < LooseVersion('R2015a'):
             shutil.copyfile(os.path.join(self.cfg['start_dir'], 'installer_input.txt'), configfile)
+            # remove non-ascii characters from the copied config file
+            cmd = 'LANG=C sed -i "s/[\d128-\d255]//g" %s' % configfile
+            run_cmd(cmd, log_all=True, simple=False)
             config = read_file(configfile)
             # compile regex first since re.sub doesn't accept re.M flag for multiline regex in Python 2.6
             regdest = re.compile(r"^# destinationFolder=.*", re.M)
